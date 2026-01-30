@@ -1,0 +1,71 @@
+# Training Configuration File
+# Multimodal Age Group Prediction Model
+
+# Data paths
+data:
+  aorta_train_path: "/hpc/group/kamaleswaranlab/DARPA_Challenge/data/aortaP_train_data.csv"
+  brach_train_path: "/hpc/group/kamaleswaranlab/DARPA_Challenge/data/brachP_train_data.csv"
+  aorta_test_path: "/hpc/group/kamaleswaranlab/DARPA_Challenge/data/aortaP_test_data.csv"
+  brach_test_path: "/hpc/group/kamaleswaranlab/DARPA_Challenge/data/brachP_test_data.csv"
+
+# Preprocessing configuration
+preprocessing:
+  apply_filter: true              # Apply Butterworth low-pass filter for denoising
+  filter_fs_hz: 500                # Sampling frequency in Hz
+  filter_lowpass_hz: 25            # Low-pass cutoff frequency in Hz
+  filter_order: 4                  # Butterworth filter order
+
+# Model architecture configuration
+model:
+  d_model: 128              # Embedding dimension
+  nhead: 8                   # Number of attention heads
+  num_layers: 4              # Number of transformer layers per encoder
+  dim_feedforward: 512       # Feed-forward network dimension
+  fusion_dim: 256            # Cross-modal fusion dimension
+  num_classes: 6             # Age groups: 20s, 30s, 40s, 50s, 60s, 70s
+  dropout: 0.1               # Dropout rate
+  max_len: 336               # Sequence length (time points)
+  pooling: "mean"            # Pooling strategy: 'mean', 'max', or 'cls'
+
+# Training hyperparameters
+training:
+  batch_size: 64             # Batch size per GPU
+  learning_rate: 0.0001       # Initial learning rate (1e-4)
+  weight_decay: 0.00001      # L2 regularization (1e-5)
+  num_epochs: 120             # Number of training epochs
+  max_samples: null          # Limit dataset size (null = use all, set for testing)
+  split_seed: 42             # Seed for deterministic split
+  gradient_clip_norm: 1.0    # Gradient clipping max norm
+  
+  # Data split ratios (from training data only)
+  train_ratio: 0.8           # Training split: 80%
+  val_ratio: 0.1             # Validation split: 10%
+  test_ratio: 0.1            # Test split: 10%
+
+# Multi-GPU configuration
+gpu:
+  device_ids: [0, 1]         # GPU IDs to use (set to null for single GPU or CPU)
+  num_workers: 4             # Data loading workers per GPU
+
+# Learning rate scheduling
+scheduler:
+  mode: "min"                # 'min' for loss, 'max' for accuracy
+  factor: 0.5                # LR reduction factor
+  patience: 5                # Epochs to wait before reducing LR
+  min_lr: 1e-6               # Minimum learning rate
+
+# Output directories
+output:
+  checkpoint_dir: "checkpoints"
+  log_dir: "logs"
+  output_dir: "outputs"
+
+# Testing configuration
+test:
+  model_path: "checkpoints/best_model.pth"  # Path to trained model
+  predictions_path: "predictions.json"      # Output predictions file
+
+# Optional: Resume training
+resume:
+  enabled: false
+  checkpoint_path: null      # Path to checkpoint to resume from
