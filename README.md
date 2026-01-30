@@ -60,7 +60,7 @@ python generate_submission.py \
 - `--output`: Output JSON file path
 - `--device`: Device for inference (`auto`, `cuda`, or `cpu`)
 - `--config`: Path to config file (default: `config/config.yaml`)
-- `--team-name`: Team name for filename validation ('OCA-SENTINEL')
+- `--team-name`: Team name for filename validation (`OCA-SENTINEL`)
 
 ### Device Options
 
