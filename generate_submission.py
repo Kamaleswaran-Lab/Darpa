@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """
+Author: Md Hassanuzzaman
+PhD Student, Duke University
+
 Generate DARPA Challenge Submission Predictions
 
 This script generates predictions on the evaluation dataset in the required
