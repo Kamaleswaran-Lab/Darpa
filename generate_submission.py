@@ -27,6 +27,11 @@ from typing import Dict
 import torch
 import pandas as pd
 import numpy as np
+import warnings
+
+# This suppresses all warnings
+warnings.filterwarnings("ignore")
+
 
 # Device utilities
 def get_device(device_str: str) -> torch.device:
@@ -193,6 +198,7 @@ def generate_predictions(
     
     predictions = {}
     sample_idx = 0
+    total_batches = len(dataloader)
     
     try:
         # Process batches
@@ -215,15 +221,15 @@ def generate_predictions(
                 predictions[int(sample_idx)] = int(pred_class)
                 sample_idx += 1
             
-            # Progress update
-            if (batch_idx + 1) % 10 == 0:
-                print(f"  Processed {sample_idx} samples...")
+            # Print progress
+            progress_pct = ((batch_idx + 1) / total_batches) * 100
+            print(f"  Progress: {batch_idx + 1}/{total_batches} batches ({progress_pct:.1f}%) - {sample_idx} samples processed", end='\r')
     
     except Exception as e:
-        print(f"❌ Error during prediction: {e}")
+        print(f"\n❌ Error during prediction: {e}")
         raise
     
-    print(f"✓ Generated {len(predictions)} predictions")
+    print(f"\n✓ Generated {len(predictions)} predictions")
     return predictions
 
 
