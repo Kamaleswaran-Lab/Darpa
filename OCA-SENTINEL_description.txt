@@ -1,0 +1,80 @@
+================================================================================
+OCA-SENTINEL: MULTIMODAL AGE GROUP PREDICTION SYSTEM
+Bootstrap Ensemble Approach
+================================================================================
+
+OVERVIEW
+This system predicts age groups (20s-70s, 6 classes) from dual-modality arterial 
+pressure waveforms (Aortic and Brachial) using a transformer-based ensemble 
+architecture with adaptive attention masking for missing data handling.
+
+--------------------------------------------------------------------------------
+DATA PROCESSING PIPELINE
+--------------------------------------------------------------------------------
+
+1. Signal Preprocessing:
+   - Butterworth 4th-order low-pass filter (fs=500Hz, cutoff=25Hz) applied to 
+     valid data segments
+   - Missing value detection and masking (preserving NaN positions)
+   - Segment-wise filtering to handle incomplete sensor readings
+
+2. Normalization:
+   - StandardScaler normalization fitted on non-missing values only
+   - Per-modality scaling (separate for Aortic and Brachial pressures)
+   - Missing values filled with zeros post-normalization (masked in attention)
+
+3. Data Augmentation via Bootstrap Sampling:
+   - 10 independent bootstrap samples with replacement (N=2700 → 2700 each)
+   - Each sample contains ~63% unique subjects with duplicates
+   - Enables variance reduction and model diversity
+
+--------------------------------------------------------------------------------
+ALGORITHM DESCRIPTION
+--------------------------------------------------------------------------------
+
+Architecture (per model):
+   • Dual-stream transformer encoders (one per modality)
+   • Input projection: 1D time series → 128-dimensional embeddings
+   • Positional encoding with sinusoidal patterns (max_len=336)
+   • 4-layer transformer encoder per modality (8 attention heads, 512 FFN dim)
+   • Adaptive Attention Masking: Boolean masks prevent attention to missing 
+     time points (inspired by AIM methodology)
+   • Cross-modal fusion: Concatenate encoded representations [256-dim]
+   • Classification head: Dropout (0.5) → FC (256→6) → Softmax
+
+Ensemble Strategy:
+   • Bootstrap Aggregating (Bagging) with 10 independent models
+   • Each model trained on different bootstrap sample (separate random data)
+   • Prediction: Probability averaging across all 10 models, then argmax
+   • Training: 120 epochs, ReduceLROnPlateau scheduler, early stopping
+   • Loss: CrossEntropyLoss, Optimizer: AdamW (lr=0.0001, weight_decay=0.01)
+
+Missing Data Handling:
+   • Attention-based masking prevents gradient flow from missing positions
+   • Models learn robust representations despite incomplete sensor data
+   • No imputation required—architecture handles sparsity natively
+
+--------------------------------------------------------------------------------
+DEVELOPMENT & VALIDATION
+--------------------------------------------------------------------------------
+
+Training Configuration:
+   • Dataset: 2700 subjects with dual-modality pressure waveforms (336 timesteps)
+   • Train/Validation Split: 80/20 per bootstrap sample
+   • Hardware: NVIDIA GPU (CUDA-enabled), batch size 32
+   • Convergence: Mean validation accuracy 84.4% ± 2.4% across 10 models
+   • Individual model range: 80.9%-89.2% validation accuracy
+
+Performance Metrics:
+   • Ensemble validation accuracy: ~85-87% (probability averaging)
+   • Prediction diversity: All 6 age groups represented (14-19% each)
+   • Inference time: ~15 minutes (875 test samples, CPU)
+   • Model size: 21 MB per checkpoint (206 MB total ensemble)
+
+Key Innovations:
+   1. Adaptive attention masking for incomplete multimodal sensor data
+   2. Bootstrap ensemble reduces overfitting and improves generalization
+   3. Signal preprocessing tailored to arterial pressure waveform characteristics
+   4. No imputation—native missing data support through architecture design
+
+================================================================================
